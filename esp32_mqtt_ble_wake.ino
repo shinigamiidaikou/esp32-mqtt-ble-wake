@@ -47,8 +47,8 @@
 
 #include "secrets.h"
 
-const char* ssid = SECRET_SSID;
-const char* password = SECRET_PASS;
+const char* wifi_ssid = SECRET_SSID;
+const char* wifi_pass = SECRET_PASS;
 const char* mqtt_server = SECRET_MQTT_SERVER;
 const int mqtt_port = 8883;
 const char* mqtt_user = SECRET_MQTT_USER;
@@ -72,23 +72,29 @@ const uint16_t ADV_FAST_MAX = 0x40;
 const uint16_t APPEARANCE_HID_KEYBOARD = 0x03C1;
 const uint8_t  HID_KEY_SPACE = 0x2C;
 
-// Standard boot-protocol keyboard descriptor with Report ID 1.
+// Standard 8-byte keyboard report with Report ID 1.
 // 8-byte input report: [modifier][reserved][keycode 1..6]; 1-byte LED output.
 static const uint8_t HID_REPORT_MAP[] = {
   0x05, 0x01,        // Usage Page (Generic Desktop)
   0x09, 0x06,        // Usage (Keyboard)
-  0xA1, 0x01,        // Collection (Application)
-  0x85, 0x01,        //   Report ID (1)
-  0x05, 0x07,        //   Usage Page (Key Codes)
-  0x19, 0xE0, 0x29, 0xE7, 0x15, 0x00, 0x25, 0x01,
-  0x75, 0x01, 0x95, 0x08, 0x81, 0x02,           //   Modifier byte (LCtrl..RGUI)
-  0x95, 0x01, 0x75, 0x08, 0x81, 0x01,           //   Reserved byte
+  0xA1, 0x01,        // Start Collection (Application)
+  0x85, 0x01,        // Report ID (1)
+  // Keyboard usage page
+  // Eight modifier bits: Left Ctrl through Right GUI
+  0x05, 0x07,
+  0x19, 0xE0, 0x29, 0xE7, 0x15, 0x00, 0x25,
+  0x01, 0x75, 0x01, 0x95, 0x08, 0x81, 0x02,
+  // Reserved byte
+  0x95, 0x01, 0x75, 0x08, 0x81, 0x01,
+  // 6 keycode slots
   0x95, 0x06, 0x75, 0x08, 0x15, 0x00, 0x25, 0x65,
-  0x05, 0x07, 0x19, 0x00, 0x29, 0x65, 0x81, 0x00, // 6 keycode slots
-  0x95, 0x05, 0x75, 0x01, 0x05, 0x08, 0x19, 0x01, 0x29, 0x05,
-  0x91, 0x02,                                     // LED output (5 bits)
-  0x95, 0x01, 0x75, 0x03, 0x91, 0x01,             // LED output padding
-  0xC0
+  0x05, 0x07, 0x19, 0x00, 0x29, 0x65, 0x81, 0x00,
+  // LED output (5 bits)
+  0x95, 0x05, 0x75, 0x01, 0x05, 0x08,
+  0x19, 0x01, 0x29, 0x05, 0x91, 0x02,
+  // LED output padding
+  0x95, 0x01, 0x75, 0x03, 0x91, 0x01,
+  0xC0 // End Collection
 };
 
 // Button state
@@ -267,10 +273,10 @@ void setup_wifi() {
   delay(10);
   Serial.println();
   Serial.print("Connecting to ");
-  Serial.println(ssid);
+  Serial.println(wifi_ssid);
 
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+  WiFi.begin(wifi_ssid, wifi_pass);
 
   int timeout = 40; // 20 seconds
   while (WiFi.status() != WL_CONNECTED && timeout > 0) {
